@@ -1,23 +1,34 @@
 package net.business;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
 
+import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
+import org.apache.catalina.ssi.SSIFsize;
+
+import com.sun.prism.Image;
+
+import entity.AdminInfo;
 import entity.Cost;
+import net.dao.AdminDao;
 import net.dao.CostDao;
+import util.ImageUtil;
 
+@SuppressWarnings("serial")
 public class MainServlet extends HttpServlet{
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		String path = req.getServletPath();
-		
 		if ("/findCost.do".equals(path)) {
 			//find zi fei
 			findCost(req, res);
@@ -26,12 +37,134 @@ public class MainServlet extends HttpServlet{
 		} else if (path.equals("/save.do")) {
 			save(req, res);
 		} else if (path.equals("/toUpdateCost.do")) {
-			toOpenUpDate(req, res);
-		}else {
+			toOpen(req, res);
+		} else if (path.equals("/upDate.do")) {
+			upDateCost(req, res);
+		} else if (path.equals("/values.do")) {
+			upDateCost(req, res);
+		} else if (path.equals("/toLogin.do")) {
+			toLogin(req, res);
+		} else if(path.equals("/toIndex.do")) {
+			toIndex(req, res);
+		} else if (path.equals("/login.do")) {
+			checkLogin(req,res);
+		} else if(path.equals("/sigOut.do")) {
+			back(req, res);
+		} else if (path.equals("/newImg.do")) {
+			createImg(req, res);
+		} else {
 			throw new RuntimeException("没有这个页面");
 		}
+		
 	}
 
+	/**
+	 *  登录页面
+	 * @param req
+	 * @param res
+	 * @throws ServletException
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unused")
+	public void checkLogin(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
+		req.setCharacterEncoding("UTF-8");
+		//获取jsp页面传过来的值
+		String user = req.getParameter("adminName");
+		String pwd = req.getParameter("password");
+		String code = req.getParameter("code");
+		//创建session
+		HttpSession session = req.getSession();
+		//获得名为imgCode的session值
+		String imgCode = (String)session.getAttribute("imgCode");
+		//判断验证码是否存和合法--忽略大小写
+		if (code == null || code.equals("") || !code.equalsIgnoreCase(imgCode)) {
+			req.setAttribute("codeError", "验证码错误");
+			req.getRequestDispatcher("WEB-INF/main/login.jsp").forward(req, res);
+			return;//验证码错误则不再往下执行
+		}
+		AdminDao dao = new AdminDao();
+		AdminInfo admin = dao.findUser(user);
+		if (admin == null) {
+			//转发并提示错误信息
+			req.setAttribute("nullValue", "账号不存在");
+			//当前:projectName/save.do
+			//目标:projectName/WEB-INF/cost/find.jsp
+			req.getRequestDispatcher("WEB-INF/main/login.jsp").forward(req, res);
+		} else if (!pwd.equals(admin.getPassword())) {
+			//密码错误
+			req.setAttribute("error", "密码错误");
+			//相对路径不以/开头
+			req.getRequestDispatcher("WEB-INF/main/login.jsp").forward(req, res);
+		} else {
+			//校验通过
+			//将用户名存入cookie
+			Cookie cookie = new Cookie("userName",user);//一条cookie记录
+			//将用户存入session，方便后面的业务判断
+			session.setAttribute("userName", user);
+			//当前：/netctoss/login.do
+			//目标：/netctoss/toIndex.do
+			//登录后到首页
+			res.sendRedirect("toIndex.do");
+			
+			System.out.println("请求的主机名:"+req.getServerName());
+			System.out.println("项目的根目录:"+req.getContextPath());
+		}
+	}
+	
+	/**
+	 * 生成验证码
+	 * @param req
+	 * @param res
+	 * @throws IOException 
+	 */
+	public void createImg(HttpServletRequest req,HttpServletResponse res) throws IOException {
+		//创建随机图片和验证码
+	Object[] images = ImageUtil.createImage();
+	//创建session 并将验证码放入sessiong 
+	HttpSession session = req.getSession();
+	session.setAttribute("imgCode", images[0]);
+	//将图片输出给浏览器
+	BufferedImage bi = (BufferedImage)images[1];
+	//指定格式
+	res.setContentType("image/png");
+	//输出流的目标就是浏览器
+	OutputStream os = res.getOutputStream();
+	ImageIO.write(bi, "png", os);
+	os.close();
+	
+	}
+	/**
+	 * 通过转发到登录界面
+	 * @param req
+	 * @param res
+	 * @throws ServletException
+	 * @throws IOException
+	 */
+	public void toLogin(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
+		req.getRequestDispatcher("WEB-INF/main/login.jsp").forward(req, res);
+	}
+	
+	/**
+	 * 登出
+	 * @param req
+	 * @param res
+	 * @throws IOException 
+	 * @throws ServletException 
+	 */
+	public void back(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
+		req.getRequestDispatcher("/WEB-INF/info.jsp").forward(req, res);
+	}
+	/**
+	 * 跳转到主页
+	 * @param req
+	 * @param res
+	 * @throws ServletException
+	 * @throws IOException
+	 */
+	public void toIndex(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
+		req.getRequestDispatcher("WEB-INF/main/index.jsp").forward(req, res);
+	}
+	
 	/**
 	 * 
 	 * @param req 请求
@@ -40,9 +173,30 @@ public class MainServlet extends HttpServlet{
 	 * @throws IOException
 	 */
 	protected void findCost(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
+		//获取请求参数
+		String page = req.getParameter("page");
+		if (page == null || page.equals("")) 
+			page = "1";
+		//获取预置在web.xml context中的数据 即获取常量
+		String length = getServletContext().getInitParameter("pageSize");
+		
+		
 		CostDao dao = new CostDao();
-		List<Cost> list = dao.findAll();
+		//查询资费
+		List<Cost> list = dao.findPage(new Integer(page),new Integer(length));
+		//查询总行数，算出总页数
+		int line = dao.allLine();
+		int total = line/new Integer(length);
+		if (line%new Integer(length) != 0) {
+			total++;
+		}
+		//将必要的数据转发到页面
 		req.setAttribute("data", list);
+		req.setAttribute("total", total);
+		req.setAttribute("page", page);
+		//当前：/netctoss/findCost.do
+		//目标：/netctoss/WEB-INF/cost/find.jsp
+		//TODO jsp页面续
 		req.getRequestDispatcher("WEB-INF/cost/find.jsp").forward(req, res);
 	}
 	
@@ -54,7 +208,7 @@ public class MainServlet extends HttpServlet{
 	}
 	
 	/**
-	 * 
+	 *  新增自费项目并保存
 	 * @param req
 	 * @param res
 	 * @throws IOException 
@@ -68,7 +222,6 @@ public class MainServlet extends HttpServlet{
 		String baseCost = req.getParameter("baseCost");
 		String unitCost = req.getParameter("unitCost");
 		String descr = req.getParameter("descr");
-		System.out.println(unitCost+"jbfy"+baseCost);
 		Cost cost = new Cost();
 		cost.setName(name);
 		cost.setDescr(descr);
@@ -99,47 +252,49 @@ public class MainServlet extends HttpServlet{
 	 * @throws ServletException
 	 * @throws IOException
 	 */
-	protected void toOpenUpDate(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
-		
+	protected void toOpen(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
 		CostDao dao = new CostDao();
 		String id = req.getParameter("id");
 		Cost cost = dao.toOpenData(Integer.valueOf(id));
 		req.setAttribute("val", cost);
 		req.getRequestDispatcher("WEB-INF/cost/upDate.jsp").forward(req, res);
-		
-		
 	}
 	
 	/**
 	 * 修改资费讯息后保存
 	 * @param req
 	 * @param res
+	 * @throws IOException 
 	 */
-	protected void upDateCost(HttpServletRequest req,HttpServletResponse res) {
-			String costId = req.getParameter("costId");
-			String name = req.getParameter("name");
-			String costType = req.getParameter("radFeeType");
-			String baseDuration = req.getParameter("baseDuration");
-			String baseCost = req.getParameter("baseCost");
-			String unitCost = req.getParameter("unitCost");
-			String descr = req.getParameter("descr");
-			//本身为字符串的内容在此不作判空。严格来说那是前端干的，而同时本人非全栈开发者...忽略这个已发现的bug
-			Cost c = new Cost();
-			c.setCostId(Integer.valueOf(costId));
-			c.setName(name);
-			c.setCostType(costType);
-			c.setDescr(descr);
-			if (baseDuration != null && !baseDuration.equals("")) {
-				c.setBaseDuration(Integer.valueOf(baseDuration));
-			}
-			if (baseCost != null && !baseCost.equals("")) {
-				c.setBaseCost(Double.valueOf(baseCost));
-			}
-			if (unitCost != null && !unitCost.equals("")) {
-				c.setUnitCost(Double.valueOf(unitCost));
-			}
-			
-			CostDao dao = new CostDao();
+	protected void upDateCost(HttpServletRequest req,HttpServletResponse res) throws IOException {
+		String costId = req.getParameter("costId");
+		String name = req.getParameter("name");
+		String costType = req.getParameter("radFeeType");
+		String baseDuration = req.getParameter("baseDuration");
+		String baseCost = req.getParameter("baseCost");
+		String unitCost = req.getParameter("unitCost");
+		String descr = req.getParameter("descr");
+		//本身为字符串的内容在此不作判空。严格来说那是前端干的，而同时本人非全栈开发者...忽略这个已发现的bug
+		Cost c = new Cost();
+		c.setCostId(Integer.valueOf(costId));
+		c.setName(name);
+		c.setCostType(costType);
+		c.setDescr(descr);
+		if (baseDuration != null && !baseDuration.equals("")) {
+			c.setBaseDuration(Integer.valueOf(baseDuration));
+		}
+		if (baseCost != null && !baseCost.equals("")) {
+			c.setBaseCost(Double.valueOf(baseCost));
+		}
+		if (unitCost != null && !unitCost.equals("")) {
+			c.setUnitCost(Double.valueOf(unitCost));
+		}
+		
+		CostDao dao = new CostDao();
+		dao.toUpDate(c);
+		//
+		res.sendRedirect("findCost.do");
+		
 	}
 	
 }

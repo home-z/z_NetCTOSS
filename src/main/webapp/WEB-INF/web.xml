@@ -18,4 +18,25 @@
   	<servlet-name>net</servlet-name>
   	<url-pattern>*.do</url-pattern>
   </servlet-mapping>
+  <!--  web.xml中元素执行的顺序listener->filter->struts拦截器->servlet。-->
+  
+  <context-param>
+  	<param-name>pageSize</param-name>
+  	<param-value>6</param-value>
+  </context-param>
+
+  <!-- 登录检查过滤器 -->
+  <filter>
+  	<filter-name>login</filter-name>
+  	<filter-class>net.business.LoginFilter</filter-class>
+  		<!-- 声明无需检查的路径 -->
+  	<init-param>
+  		<param-name>ignorePath</param-name>
+  		<param-value>/login.do,/toLogin.do,/newImg.do</param-value>
+  	</init-param>
+  </filter>
+  <filter-mapping>
+  	<filter-name>login</filter-name>
+  	<url-pattern>*.do</url-pattern>
+  </filter-mapping>
 </web-app>

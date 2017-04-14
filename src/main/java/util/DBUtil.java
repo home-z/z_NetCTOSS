@@ -22,7 +22,7 @@ public class DBUtil {
 			ds.setUsername(op.getProperty("jdbc.user"));
 			ds.setPassword(op.getProperty("jdbc.password"));
 			ds.setMaxActive(Integer.parseInt(op.getProperty("dbcp.maxActive")));
-			//TODO 数据库连接池 无setInitialSize方法 原因是jdbcjar版本不对
+			// 数据库连接池 无setInitialSize方法 原因是jdbcjar版本不对
 			ds.setInitialSize(Integer.parseInt(op.getProperty("dbcp.initSize")));
 		} catch (IOException e) {
 			throw new RuntimeException("读取属性文件出错");

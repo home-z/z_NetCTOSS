@@ -36,7 +36,7 @@
         <!--Logo区域开始-->
         <div id="header">
             <img src="images/logo.png" alt="logo" class="left"/>
-            <a href="#">[退出]</a>            
+            <a href="toLogin.do">[退出]</a>            
         </div>
         <!--Logo区域结束-->
         <!--导航区域开始-->
@@ -57,7 +57,7 @@
         <!--导航区域结束-->
         <!--主要区域开始-->
         <div id="main">
-            <form action="" method="">
+            <form action="" method="post">
                 <!--排序-->
                 <div class="search_add">
                     <div>
@@ -129,13 +129,36 @@
                 </div>
                 <!--分页-->
                 <div id="pages">
-        	        <a href="#">上一页</a>
-                    <a href="#" class="current_page">1</a>
-                    <a href="#">2</a>
-                    <a href="#">3</a>
-                    <a href="#">4</a>
-                    <a href="#">5</a>
-                    <a href="#">下一页</a>
+                <!-- 当前是第一页，则不能点击上一页 -->
+                  <c:if test="${page==1 }">
+        	        <a href="">上一页</a>
+        	      </c:if>
+        	      <c:if test="${page!=1 }">	
+        	      	<a href="findCost.do?page=${page-1 }">上一页</a>
+        	      </c:if>
+        	      
+        	       <!-- 
+                 	begin：循环起始位置；
+                 	end：循环终止位置；
+                 -->
+        	      <c:forEach begin="1" end="${total }" var="i">
+        	      	<c:if test="${i==page }">
+        	      	<!-- 若循环到了当前页，则将页码高亮显示 -->
+                    	<a href="findCost.do?page${i }" class="current_page">${i }</a>
+                    </c:if>
+                    <!-- 若不是当前页，则去掉高亮的样式 -->
+                    <c:if test="${i!=page }">
+                    	<a href="findCost.do?page${i }">${i }</a>
+                    </c:if>
+                  </c:forEach>
+                  
+                  <!-- 当前数据是最后一条，则不能点下一页 -->
+                  <c:if test="${page==total }">
+                    <a href="">下一页</a><p>已经是最后一页</p>
+                  </c:if>
+                  <c:if test="${page!=total }">
+                  	<a href="findCost.do?page=${page+1 }">下一页</a>
+                  </c:if>
                 </div>
             </form>
         </div>

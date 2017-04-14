@@ -6,9 +6,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import com.sun.java_cup.internal.runtime.virtual_parse_stack;
+
+import org.eclipse.jdt.internal.compiler.ast.ThrowStatement;
+
 import com.sun.org.apache.regexp.internal.recompile;
 
+import entity.AdminInfo;
 import entity.Cost;
 import util.DBUtil;
 
@@ -39,6 +42,7 @@ public class CostDao {
 	 * @return 返回Cost
 	 */
 	public List<Cost> findAll() {
+		//TODO 将被查询页数的方法替换
 //		Class.forName("oracle.jdbc.driver.OracleDriver");
 		Connection conn = null;
 	try {
@@ -57,7 +61,6 @@ public class CostDao {
 			}
 			return list;
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new RuntimeException("查询数据失败");
 		} finally {
@@ -94,7 +97,6 @@ public class CostDao {
 			//执行
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new RuntimeException("添加资费信息失败",e);
 		} finally {
@@ -128,25 +130,112 @@ public class CostDao {
 		Connection con = null;
 		try {
 			con = DBUtil.getConnection();
-			String sql ="UPDATE cost SET name='?',cost_type='?', "
-					+ "base_duration='?',base_cost='?',unit_cost='?',descr='?' "
+			//TODO 若有异常 可尝试去掉占位符的单引号
+			String sql ="UPDATE cost SET name='?',base_duration='?',base_cost='?',unit_cost='?',cost_type='?' "
+					+ ",descr='?' "
 					+ " where cost_id=?";
 			PreparedStatement ps = con.prepareStatement(sql);
 			ps.setString(1, c.getName());
-			ps.setString(2, c.getCostType());
-			ps.setInt(3, c.getBaseDuration());
-			ps.setDouble(4, c.getBaseCost());
-			ps.setDouble(5, c.getUnitCost());
+			ps.setInt(2, c.getBaseDuration());
+			ps.setDouble(3, c.getBaseCost());
+			ps.setDouble(4, c.getUnitCost());
+			ps.setString(5, c.getCostType());
 			ps.setString(6, c.getDescr());
 			ps.setInt(7, c.getCostId());
 			ps.executeUpdate();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new RuntimeException("更新资费失败", e);
+		} finally {
+			if (con != null) {
+				DBUtil.close(con);
+			}
 		}
-		
 	}
+	
+	
+	
+	/**
+	 * 
+	 * @param id
+	 */
+	public void upDateCost(String id) {
+		//TODO 删除资费
+//		Connection con = null;
+//		try {
+//			con = DBUtil.getConnection();
+//			String sql = "up";
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//		}
+//	
+	}
+	
+	/**
+	 * 
+	 * @return 行数量
+	 */
+	public int allLine() {
+		Connection con = null;
+		try {
+			con = DBUtil.getConnection();
+			String sql = "select count(*) from cost";
+			PreparedStatement ps = con.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			if (rs.next()) {
+				// 第一个列是 1，第二个列是 2，……
+				return rs.getInt(1);
+			}
+			} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("查询总行数失败");
+		} finally {
+			if (con != null) {
+				DBUtil.close(con);
+			}
+		}
+		return 0;
+	}
+	
+	/**
+	 * 查询某一页的资费数据
+	 * @param page 页数
+	 * @param size 每页显示的行数
+	 * @return
+	 */
+	public List<Cost> findPage(int page,int size) {
+		Connection con = null;
+		try {
+			con = DBUtil.getConnection();
+			String sql = "select * from ( "
+					+ " select c.*,rownum r from ( "
+					+ " select * from cost order by cost_id "
+					+ " ) "
+					+ " c) where r between ? and ?";
+			PreparedStatement ps = con.prepareStatement(sql);
+			ps.setInt(1, (page-1)*size+1);
+			ps.setInt(2, page*size);
+			ResultSet rs = ps.executeQuery();
+			List<Cost> costList = new ArrayList<Cost>();
+			while(rs.next()) {
+				Cost cost = createCost(rs);
+				costList.add(cost);
+			}
+			return costList;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("分页查询资费失败",e);
+		} finally {
+				DBUtil.close(con);
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
 	public static void main(String[] args) throws ClassNotFoundException {
 		
 		CostDao dao = new CostDao();
@@ -171,5 +260,4 @@ public class CostDao {
 		dao.save(cost);
 		System.out.println("save over");
 	}
-	
 }

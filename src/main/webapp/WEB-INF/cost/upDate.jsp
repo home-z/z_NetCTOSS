@@ -1,7 +1,7 @@
 <%@page pageEncoding="utf-8" %>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<!DOCTYPE html >
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -84,7 +84,7 @@
             <div id="save_result_info" class="save_success">保存成功！</div>
             <form action="" method="" class="main_form">
                 <div class="text_info clearfix"><span>资费ID：</span></div>
-                <div class="input_info"><input type="text" class="readonly" readonly name="costId" value="${val.costId }" /></div>
+                <div class="input_info"><input type="text" class="readonly" readonly name="${val.costId }" value="${val.costId }" /></div>
                 <div class="text_info clearfix"><span>资费名称：</span></div>
                 <div class="input_info">
                     <input type="text" class="width300" name="name" value="${val.name }"/>
@@ -93,11 +93,11 @@
                 </div>
                 <div class="text_info clearfix"><span>资费类型：</span></div>
                 <div class="input_info fee_type">
-                    <input type="radio" name="radFeeType" value="${val.costType }" id="monthly" onclick="feeTypeChange(1);" />
+                    <input type="radio" name="radFeeType" ${val.costType== '1' ?'checked':'' }   id="monthly" onclick="feeTypeChange(1);" />
                     <label for="monthly">包月</label>
-                    <input type="radio" name="radFeeType" value="${val.costType }" checked="checked" id="package" onclick="feeTypeChange(2);" />
+                    <input type="radio" name="radFeeType" ${val.costType=='2' ?'checked':'' }  id="package" onclick="feeTypeChange(2);" />
                     <label for="package">套餐</label>
-                    <input type="radio" name="radFeeType" value="${val.costType }" id="timeBased" onclick="feeTypeChange(3);" />
+                    <input type="radio" name="radFeeType" ${val.costType=='3' ? 'checked':'' }  id="timeBased" onclick="feeTypeChange(3);" />
                     <label for="timeBased">计时</label>
                 </div>
                 <div class="text_info clearfix"><span>基本时长：</span></div>
@@ -127,7 +127,7 @@
                     <div class="validate_msg_short">100长度的字母、数字、汉字和下划线的组合</div>
                 </div>                    
                 <div class="button_info clearfix">
-                    <input type="submit" value="保存" class="btn_save" />
+                    <input type="submit" value="保存" class="btn_save" onclick="/values.do"/>
                     <input type="button" value="取消" class="btn_save" onclick="history.back();"/>
                 </div>
             </form>
