@@ -4,7 +4,6 @@ import org.junit.Test;
 
 import entity.AdminInfo;
 import net.dao.AdminDao;
-import net.dao.CostDao;
 
 
 public class TestAdim {
@@ -17,3 +16,5 @@ public class TestAdim {
 		System.out.println(admin.getPassword());
 	}
 }
+
+

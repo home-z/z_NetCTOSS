@@ -13,10 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.catalina.ssi.SSIFsize;
-
-import com.sun.prism.Image;
-
 import entity.AdminInfo;
 import entity.Cost;
 import net.dao.AdminDao;
@@ -99,6 +95,7 @@ public class MainServlet extends HttpServlet{
 			//校验通过
 			//将用户名存入cookie
 			Cookie cookie = new Cookie("userName",user);//一条cookie记录
+			res.addCookie(cookie);
 			//将用户存入session，方便后面的业务判断
 			session.setAttribute("userName", user);
 			//当前：/netctoss/login.do
@@ -175,28 +172,33 @@ public class MainServlet extends HttpServlet{
 	protected void findCost(HttpServletRequest req,HttpServletResponse res) throws ServletException, IOException {
 		//获取请求参数
 		String page = req.getParameter("page");
+		//思路：总页数是根据查出来的总行数除以自定义的每页显示的行数得到的结果
+		//这是动态的，会根据你所在的页数得出你距离最后一页的页数
 		if (page == null || page.equals("")) 
 			page = "1";
 		//获取预置在web.xml context中的数据 即获取常量
+		//Context对象有两个作用：1可以从配置文件读取固定的数据，
+		//2可以在程序运行时动态的存取数据 一对多 一个context对应多个servlet
+		//getInitParameter("")是读取固定数据的，...Attribute(arg0)动态存取数据
+		//Config对象只能从配置文件读参数读固定值 一对一 一个config对应一个servlet
 		String length = getServletContext().getInitParameter("pageSize");
-		
-		
 		CostDao dao = new CostDao();
 		//查询资费
 		List<Cost> list = dao.findPage(new Integer(page),new Integer(length));
-		//查询总行数，算出总页数
+		//查询总行数
 		int line = dao.allLine();
+		//算出总页数
 		int total = line/new Integer(length);
+		//取余运算：line除以length 的余数不为0的话...
 		if (line%new Integer(length) != 0) {
+		//每页6条数据除以总行数的出页数,若所得结果有余数总页数+1
 			total++;
 		}
-		//将必要的数据转发到页面
-		req.setAttribute("data", list);
-		req.setAttribute("total", total);
-		req.setAttribute("page", page);
+		req.setAttribute("data", list);//页面数据
+		req.setAttribute("total", total);//总页数
+		req.setAttribute("page", page);//当前页
 		//当前：/netctoss/findCost.do
 		//目标：/netctoss/WEB-INF/cost/find.jsp
-		//TODO jsp页面续
 		req.getRequestDispatcher("WEB-INF/cost/find.jsp").forward(req, res);
 	}
 	

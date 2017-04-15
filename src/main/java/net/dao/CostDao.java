@@ -213,7 +213,10 @@ public class CostDao {
 					+ " ) "
 					+ " c) where r between ? and ?";
 			PreparedStatement ps = con.prepareStatement(sql);
+			//算出起始行和结束行
+			//第一?是起始行：上一页（page-1）最后一行+1 （就是当前页的第一行） 
 			ps.setInt(1, (page-1)*size+1);
+			//第二?是终止行(相对的)：当前页*每页显示条数
 			ps.setInt(2, page*size);
 			ResultSet rs = ps.executeQuery();
 			List<Cost> costList = new ArrayList<Cost>();

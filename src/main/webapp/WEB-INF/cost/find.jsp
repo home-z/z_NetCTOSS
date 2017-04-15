@@ -144,11 +144,11 @@
         	      <c:forEach begin="1" end="${total }" var="i">
         	      	<c:if test="${i==page }">
         	      	<!-- 若循环到了当前页，则将页码高亮显示 -->
-                    	<a href="findCost.do?page${i }" class="current_page">${i }</a>
+                    	<a href="findCost.do?page=${i }" class="current_page">${i }</a>
                     </c:if>
                     <!-- 若不是当前页，则去掉高亮的样式 -->
                     <c:if test="${i!=page }">
-                    	<a href="findCost.do?page${i }">${i }</a>
+                    	<a href="findCost.do?page=${i }">${i }</a>
                     </c:if>
                   </c:forEach>
                   
